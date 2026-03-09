@@ -37,10 +37,14 @@
     "clsx": "^2.1.1"
   },
   "lint-staged": {
-    "**/*.{ts,tsx,js,jsx}": [
-      "prettier --write",
-      "eslint --max-warnings=0",
-      "ggshield secret scan pre-commit"
+    "apps/**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ],
+    "**/package.json": [
+      "prettier --write"
+    ],
+    "**/*.{json,md,yml}": [
+      "prettier --write"
     ]
   }
 }

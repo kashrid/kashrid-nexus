@@ -2,10 +2,13 @@ name: 🚀 Kashrid Nexus Smart Deploy
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, dev]
+    # Added root files to ensure the first setup and config changes trigger the build
     paths:
-      - 'apps/**'
-      - 'docker-compose.prod.yml'
+      - "apps/**"
+      - "docker-compose.prod.yml"
+      - "package.json"
+      - ".github/workflows/**"
 
 jobs:
   deploy:
@@ -14,7 +17,7 @@ jobs:
       - name: 🚚 Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0 # Fetch all history so paths-filter can compare correctly
 
       - name: 🔍 Check Changed Files
         id: filter
@@ -32,23 +35,32 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Navigate to project root
             cd ~/kashrid-nexus
-            
-            # Sync code
+
+            # 1. Sync code from GitHub to VPS
+            # Using fetch and reset is safer for production
             git fetch origin ${{ github.ref_name }}
             git reset --hard origin/${{ github.ref_name }}
 
-            # Smart Rebuild
+            # 2. Smart Rebuild logic
+            # Only rebuilds the specific service if its folder had changes
+
             if [ "${{ steps.filter.outputs.frontend }}" == "true" ]; then
+              echo "🛠️ Rebuilding Frontend..."
               docker compose -f docker-compose.prod.yml up -d --build --no-deps frontend
             fi
 
             if [ "${{ steps.filter.outputs.admin }}" == "true" ]; then
+              echo "🛠️ Rebuilding Admin..."
               docker compose -f docker-compose.prod.yml up -d --build --no-deps admin
             fi
 
             if [ "${{ steps.filter.outputs.socket }}" == "true" ]; then
+              echo "🛠️ Rebuilding Socket Server..."
               docker compose -f docker-compose.prod.yml up -d --build --no-deps socket-server
             fi
-            
+
+            # 3. Post-deploy cleanup
+            # Removes old, unused image layers to save VPS disk space
             docker image prune -f
