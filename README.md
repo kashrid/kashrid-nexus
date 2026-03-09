@@ -157,3 +157,12 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.dev/docs/reference/configuration)
 - [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+
+
+
+
+# Add to production dependencies
+pnpm add lodash --filter frontend
+
+# Add to devDependencies
+pnpm add -D typescript --filter admin

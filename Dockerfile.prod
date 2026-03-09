@@ -1,0 +1,28 @@
+FROM oven/bun:1-slim AS base
+WORKDIR /app
+
+FROM base AS pruner
+RUN bun add -g turbo
+COPY . .
+ARG APP_NAME
+RUN turbo prune $APP_NAME --docker
+
+FROM base AS builder
+COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN curl -fsSL https://get.pnpm.io/v1/install.sh | sh -
+ENV PATH="/root/.local/share/pnpm:$PATH"
+RUN pnpm install --frozen-lockfile
+ARG APP_NAME
+RUN DATABASE_URL="postgresql://localhost:5432/temp" pnpm run build --filter=$APP_NAME
+
+FROM base AS runner
+WORKDIR /app
+ARG APP_NAME
+COPY --from=builder /app/apps/$APP_NAME/.next/standalone ./
+COPY --from=builder /app/apps/$APP_NAME/.next/static ./apps/$APP_NAME/.next/static
+COPY --from=builder /app/apps/$APP_NAME/public ./apps/$APP_NAME/public
+COPY --from=builder /app/apps/$APP_NAME/src ./src
+
+EXPOSE 3000
+CMD ["bun", "server.js"]

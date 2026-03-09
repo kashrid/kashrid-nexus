@@ -1,0 +1,54 @@
+name: 🚀 Kashrid Nexus Smart Deploy
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'apps/**'
+      - 'docker-compose.prod.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔍 Check Changed Files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend: ['apps/frontend/**']
+            admin: ['apps/admin/**']
+            socket: ['apps/socket-server/**']
+
+      - name: 🛡️ Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/kashrid-nexus
+            
+            # Sync code
+            git fetch origin ${{ github.ref_name }}
+            git reset --hard origin/${{ github.ref_name }}
+
+            # Smart Rebuild
+            if [ "${{ steps.filter.outputs.frontend }}" == "true" ]; then
+              docker compose -f docker-compose.prod.yml up -d --build --no-deps frontend
+            fi
+
+            if [ "${{ steps.filter.outputs.admin }}" == "true" ]; then
+              docker compose -f docker-compose.prod.yml up -d --build --no-deps admin
+            fi
+
+            if [ "${{ steps.filter.outputs.socket }}" == "true" ]; then
+              docker compose -f docker-compose.prod.yml up -d --build --no-deps socket-server
+            fi
+            
+            docker image prune -f

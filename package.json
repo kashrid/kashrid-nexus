@@ -1,20 +1,46 @@
 {
-  "name": "kashrid-nexus",
+  "name": "@kashrid-nexus/source",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "prepare": "husky",
+    "sonar": "sonar-scanner",
+    "db:generate": "turbo run db:generate",
+    "db:push": "pnpm --filter @kashrid/database exec prisma db push"
   },
   "devDependencies": {
-    "prettier": "^3.7.4",
-    "turbo": "^2.8.14",
-    "typescript": "5.9.2"
+    "typescript": "^5.5.0",
+    "turbo": "^2.3.0",
+    "eslint": "^9.14.0",
+    "prettier": "^3.2.5",
+    "husky": "^9.0.0",
+    "lint-staged": "^16.0.0",
+    "prisma": "^6.0.0",
+    "tailwindcss": "^4.0.0"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@prisma/client": "^6.0.0",
+    "pg": "^8.11.3",
+    "ioredis": "^5.4.0",
+    "zod": "^3.24.0",
+    "axios": "^1.6.0",
+    "zustand": "^5.0.0",
+    "clsx": "^2.1.1"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --max-warnings=0",
+      "ggshield secret scan pre-commit"
+    ]
   }
 }
